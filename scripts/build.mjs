@@ -1,0 +1,638 @@
+import fs from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+import { profile } from "../src/data/profile.mjs";
+import { projects, repoProjects } from "../src/data/projects.mjs";
+import { linkGroups } from "../src/data/links.mjs";
+import { cv } from "../src/data/cv.mjs";
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const rootDir = path.resolve(__dirname, "..");
+const distDir = path.join(rootDir, "dist");
+const sourceAssetDir = path.join(rootDir, "src", "assets");
+const sourceStyleDir = path.join(rootDir, "src", "styles");
+const sourceScriptDir = path.join(rootDir, "src", "scripts");
+const publicDir = path.join(rootDir, "public");
+
+const navItems = [
+  { label: "Inicio", href: "/", active: "home" },
+  { label: "Links", href: "/links/", active: "links" },
+  { label: "Proyectos", href: "/proyectos/", active: "projects" },
+  { label: "CV", href: "/cv/", active: "cv" }
+];
+
+const pages = [
+  { out: "index.html", route: "/", depth: 0 },
+  { out: "links/index.html", route: "/links/", depth: 1 },
+  { out: "proyectos/index.html", route: "/proyectos/", depth: 1 },
+  { out: "cv/index.html", route: "/cv/", depth: 1 }
+];
+
+const shortRedirects = [
+  ["/github", profile.github, 302],
+  ["/linkedin", profile.linkedin, 302],
+  ["/telegram", profile.telegram, 302],
+  ["/instagram", profile.instagram, 302],
+  ["/x", profile.x, 302],
+  ["/friends4you", "https://github.com/samu-tec/Friends4You", 302],
+  ["/discord-rag-bot", "https://github.com/samu-tec/Discord-RAG-Bot", 302],
+  ["/pokeapi", "https://github.com/samu-tec/PokeAPI", 302],
+  ["/proyectos/friends4you/", "https://github.com/samu-tec/Friends4You", 302],
+  ["/proyectos/discord-rag-bot/", "https://github.com/samu-tec/Discord-RAG-Bot", 302],
+  ["/proyectos/pokeapi/", "https://github.com/samu-tec/PokeAPI", 302],
+  ["/contacto", "/links/", 302],
+  ["/contacto/", "/links/", 302],
+  ["/contacto.html", "/links/", 301],
+  ["/profesional.html", "/cv/", 301],
+  ["/sobremi.html", "/", 301],
+  ["/index.html", "/", 301]
+];
+
+export function build() {
+  resetDist();
+  copyStaticAssets();
+  writePage("index.html", renderHome());
+  writePage("links/index.html", renderLinks());
+  writePage("proyectos/index.html", renderProjects());
+  writePage("cv/index.html", renderCv());
+
+  writeText("_redirects", renderRedirects());
+  writeText("robots.txt", renderRobots());
+  writeText("sitemap.xml", renderSitemap());
+}
+
+function resetDist() {
+  const resolved = path.resolve(distDir);
+  if (!resolved.startsWith(rootDir)) {
+    throw new Error(`Refusing to write outside project root: ${resolved}`);
+  }
+
+  fs.rmSync(resolved, { recursive: true, force: true });
+  fs.mkdirSync(resolved, { recursive: true });
+}
+
+function copyStaticAssets() {
+  copyDir(sourceAssetDir, path.join(distDir, "assets"));
+  copyDir(sourceStyleDir, path.join(distDir, "assets", "css"));
+  copyDir(sourceScriptDir, path.join(distDir, "assets", "js"));
+
+  if (fs.existsSync(publicDir)) {
+    copyDir(publicDir, distDir);
+  }
+}
+
+function copyDir(from, to) {
+  if (!fs.existsSync(from)) {
+    return;
+  }
+
+  fs.mkdirSync(to, { recursive: true });
+  for (const entry of fs.readdirSync(from, { withFileTypes: true })) {
+    const fromPath = path.join(from, entry.name);
+    const toPath = path.join(to, entry.name);
+
+    if (entry.isDirectory()) {
+      copyDir(fromPath, toPath);
+    } else {
+      fs.copyFileSync(fromPath, toPath);
+    }
+  }
+}
+
+function writePage(relativePath, html) {
+  writeText(relativePath, html);
+}
+
+function writeText(relativePath, content) {
+  const outPath = path.join(distDir, relativePath);
+  fs.mkdirSync(path.dirname(outPath), { recursive: true });
+  fs.writeFileSync(outPath, content, "utf8");
+}
+
+function renderHome() {
+  const featuredProjects = projects.filter((project) => project.featured);
+
+  return layout({
+    title: profile.seo.title,
+    description: profile.seo.description,
+    active: "home",
+    route: "/",
+    depth: 0,
+    bodyClass: "home-page",
+    body: `
+      <section class="hero section-shell">
+        <div class="hero__content reveal">
+          <p class="eyebrow">Portfolio personal</p>
+          <h1>${escapeHtml(profile.name)}</h1>
+          <p class="hero__role">${escapeHtml(profile.role)}</p>
+          <p class="hero__intro">${escapeHtml(profile.intro)}</p>
+          <div class="hero__actions" aria-label="Acciones principales">
+            ${buttonLink("Ver proyectos", "/proyectos/", 0, "primary", "grid")}
+            ${buttonLink("Email", `mailto:${profile.email}`, 0, "secondary", "mail")}
+            ${buttonLink("GitHub", profile.github, 0, "ghost", "github")}
+            ${buttonLink("LinkedIn", profile.linkedin, 0, "ghost", "linkedin")}
+            ${buttonLink("Telegram", profile.telegram, 0, "ghost", "send")}
+          </div>
+          <dl class="hero__facts" aria-label="Resumen rápido">
+            <div><dt>Foco</dt><dd>DAW</dd></div>
+            <div><dt>Stack</dt><dd>Aplicaciones web</dd></div>
+            <div><dt>Dominio</dt><dd>samuelciocan.com</dd></div>
+          </dl>
+        </div>
+
+        <div class="hero__visual reveal" aria-label="Presentación visual de Samuel Ciocan">
+          <div class="portrait-stage">
+            <img src="${asset("assets/img/samuel-ciocan.png", 0)}" alt="Foto de Samuel Ciocan" width="760" height="760" decoding="async" fetchpriority="high">
+            <div class="status-card" aria-label="Estado profesional">
+              <span class="status-dot" aria-hidden="true"></span>
+              <span>Disponible para nuevos retos web</span>
+            </div>
+          </div>
+          <div class="code-panel" aria-label="Resumen en formato código">
+            <span class="code-panel__bar"></span>
+            <pre><code>const developer = {
+  name: "Samuel Ciocan",
+  role: "Desarrollador Web",
+  focus: "aplicaciones útiles"
+};</code></pre>
+          </div>
+        </div>
+      </section>
+
+      <section class="section-shell section-block">
+        <div class="section-heading reveal">
+          <p class="eyebrow">Proyectos</p>
+          <h2>Proyectos con intención y práctica real</h2>
+          <p>Repositorios donde practico, construyo y documento soluciones web con una base técnica cada vez más sólida.</p>
+        </div>
+        <div class="project-grid project-grid--featured">
+          ${featuredProjects.map((project) => projectCard(project, 0)).join("")}
+        </div>
+      </section>
+
+      <section class="section-shell split-section">
+        <div class="surface-panel reveal">
+          <p class="eyebrow">Tecnologías</p>
+          <h2>Herramientas para crear productos web</h2>
+          <p>Me centro en tecnologías que permiten crear interfaces claras, conectar datos y mantener proyectos sin complicarlos.</p>
+          ${tagList(profile.technologies)}
+        </div>
+        <div class="surface-panel surface-panel--accent reveal">
+          <p class="eyebrow">Enfoque</p>
+          <h2>Claridad visual, estructura limpia y criterio práctico</h2>
+          <p>Busco que cada página sea fácil de entender, cómoda de usar en móvil y sencilla de seguir mejorando.</p>
+          <div class="inline-actions">
+            ${buttonLink("Ver CV", "/cv/", 0, "secondary", "file")}
+            ${buttonLink("Email", `mailto:${profile.email}`, 0, "primary", "mail")}
+          </div>
+        </div>
+      </section>
+    `
+  });
+}
+
+function renderLinks() {
+  return layout({
+    title: `${profile.name} | Links`,
+    description:
+      "Enlaces principales de Samuel Ciocan: portfolio, proyectos, GitHub, contacto y redes profesionales.",
+    active: "links",
+    route: "/links/",
+    depth: 1,
+    bodyClass: "links-page",
+    body: `
+      <section class="links-hero">
+        <div class="link-card-main reveal">
+          <img src="${asset("assets/img/samuel-ciocan.png", 1)}" alt="Foto de Samuel Ciocan" width="220" height="220" decoding="async">
+          <p class="eyebrow">Enlaces profesionales</p>
+          <h1>${escapeHtml(profile.name)}</h1>
+          <p>${escapeHtml(profile.role)} · proyectos, CV, contacto y repositorios.</p>
+          <a class="email-chip" href="mailto:${escapeAttribute(profile.email)}">${icon("mail")} ${escapeHtml(profile.email)}</a>
+        </div>
+
+        <div class="links-stack">
+          ${linkGroups
+            .map(
+              (group) => `
+                <section class="link-group reveal" aria-labelledby="link-group-${slugify(group.title)}">
+                  <h2 id="link-group-${slugify(group.title)}">${escapeHtml(group.title)}</h2>
+                  <div class="bio-links">
+                    ${group.items.map((item) => bioLink(item, 1)).join("")}
+                  </div>
+                </section>
+              `
+            )
+            .join("")}
+        </div>
+      </section>
+    `
+  });
+}
+
+function renderProjects() {
+  return layout({
+    title: `${profile.name} | Proyectos`,
+    description:
+      "Proyectos de Samuel Ciocan: Friends4You, Discord-RAG-Bot, PokeAPI y portfolio personal.",
+    active: "projects",
+    route: "/proyectos/",
+    depth: 1,
+    bodyClass: "projects-page",
+    body: `
+      <section class="page-hero section-shell reveal">
+        <p class="eyebrow">Portfolio de proyectos</p>
+        <h1>Proyectos web y repositorios</h1>
+        <p>Una selección directa de repositorios con una descripción breve, tecnologías usadas y acceso al código en GitHub.</p>
+      </section>
+
+      <section class="section-shell">
+        <div class="project-grid">
+          ${repoProjects.map((project) => projectCard(project, 1)).join("")}
+        </div>
+      </section>
+    `
+  });
+}
+
+function renderCv() {
+  const featured = projects.filter((project) => project.featured);
+
+  return layout({
+    title: `${profile.name} | CV`,
+    description:
+      "Currículum web de Samuel Ciocan: perfil, formación, tecnologías, proyectos destacados y contacto.",
+    active: "cv",
+    route: "/cv/",
+    depth: 1,
+    bodyClass: "cv-page",
+    body: `
+      <section class="page-hero section-shell reveal">
+        <p class="eyebrow">Currículum web</p>
+        <h1>${escapeHtml(profile.name)}</h1>
+        <p>${escapeHtml(cv.headline)}</p>
+        <div class="inline-actions">
+          ${buttonLink("Email", `mailto:${profile.email}`, 1, "primary", "mail")}
+          ${buttonLink("LinkedIn", profile.linkedin, 1, "secondary", "linkedin")}
+        </div>
+      </section>
+
+      <section class="section-shell cv-grid">
+        <div class="surface-panel surface-panel--wide reveal">
+          <h2>Perfil</h2>
+          <p>${escapeHtml(profile.profileSummary)}</p>
+        </div>
+        <div class="surface-panel surface-panel--wide reveal">
+          <h2>Experiencia</h2>
+          ${timelineList(cv.experience)}
+        </div>
+        <div class="surface-panel reveal">
+          <h2>Formación</h2>
+          ${educationList(cv.education)}
+        </div>
+        <div class="surface-panel reveal">
+          <h2>Tecnologías</h2>
+          ${tagList(profile.technologies)}
+        </div>
+        <div class="surface-panel reveal">
+          <h2>Habilidades</h2>
+          ${featureList(cv.skills)}
+        </div>
+        <div class="surface-panel reveal">
+          <h2>Idiomas y disponibilidad</h2>
+          ${featureList([...cv.languages, ...cv.availability])}
+        </div>
+        <div class="surface-panel surface-panel--wide reveal">
+          <h2>Proyectos destacados</h2>
+          ${featureList(featured.map((project) => `${project.name}: ${project.description}`))}
+        </div>
+        <div class="surface-panel surface-panel--wide reveal">
+          <h2>Contacto</h2>
+          <p>Disponible para conversaciones profesionales, prácticas, colaboraciones y proyectos web.</p>
+          <div class="inline-actions">
+            ${buttonLink(profile.email, `mailto:${profile.email}`, 1, "primary", "mail")}
+            ${buttonLink("GitHub", profile.github, 1, "secondary", "github")}
+            ${buttonLink("LinkedIn", profile.linkedin, 1, "ghost", "linkedin")}
+            ${buttonLink("Telegram", profile.telegram, 1, "ghost", "send")}
+          </div>
+        </div>
+      </section>
+    `
+  });
+}
+
+function layout({ title, description, active, route, depth, body, bodyClass }) {
+  const canonical = canonicalUrl(route);
+  const image = canonicalUrl(`/${profile.seo.image}`);
+
+  return `<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>${escapeHtml(title)}</title>
+  <meta name="description" content="${escapeAttribute(description)}">
+  <link rel="canonical" href="${escapeAttribute(canonical)}">
+  <meta name="theme-color" content="#ff7a18">
+  <meta property="og:type" content="website">
+  <meta property="og:locale" content="es_ES">
+  <meta property="og:site_name" content="${escapeAttribute(profile.name)}">
+  <meta property="og:title" content="${escapeAttribute(title)}">
+  <meta property="og:description" content="${escapeAttribute(description)}">
+  <meta property="og:url" content="${escapeAttribute(canonical)}">
+  <meta property="og:image" content="${escapeAttribute(image)}">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="${escapeAttribute(title)}">
+  <meta name="twitter:description" content="${escapeAttribute(description)}">
+  <meta name="twitter:image" content="${escapeAttribute(image)}">
+  <link rel="icon" href="${asset("favicon.svg", depth)}" type="image/svg+xml">
+  <link rel="manifest" href="${asset("site.webmanifest", depth)}">
+  <link rel="preload" href="${asset("assets/css/styles.css", depth)}" as="style">
+  <link rel="stylesheet" href="${asset("assets/css/styles.css", depth)}">
+  <script defer src="${asset("assets/js/main.js", depth)}"></script>
+</head>
+<body class="${escapeAttribute(bodyClass)}">
+  <a class="skip-link" href="#contenido">Saltar al contenido</a>
+  ${siteHeader(active, depth)}
+  <main id="contenido">
+    ${body}
+  </main>
+  ${siteFooter(depth)}
+  <div class="toast" role="status" aria-live="polite" aria-atomic="true"></div>
+</body>
+</html>
+`;
+}
+
+function siteHeader(active, depth) {
+  return `
+  <header class="site-header">
+    <nav class="nav-shell" aria-label="Navegación principal">
+      <a class="brand" href="${routeHref("/", depth)}" aria-label="${escapeAttribute(profile.name)} - inicio">
+        <span class="brand__mark" aria-hidden="true">SC</span>
+        <span>${escapeHtml(profile.name)}</span>
+      </a>
+      <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="site-menu">
+        <span class="sr-only">Abrir menú</span>
+        <span aria-hidden="true"></span>
+        <span aria-hidden="true"></span>
+        <span aria-hidden="true"></span>
+      </button>
+      <div class="nav-links" id="site-menu">
+        ${navItems
+          .map(
+            (item) => `
+              <a href="${routeHref(item.href, depth)}" ${
+                item.active === active ? 'aria-current="page"' : ""
+              }>${escapeHtml(item.label)}</a>
+            `
+          )
+          .join("")}
+      </div>
+    </nav>
+  </header>
+`;
+}
+
+function siteFooter(depth) {
+  return `
+  <footer class="site-footer">
+    <div class="footer-shell">
+      <div>
+        <strong>${escapeHtml(profile.name)}</strong>
+        <p>${escapeHtml(profile.role)}</p>
+      </div>
+      <div class="footer-links" aria-label="Enlaces de contacto">
+        <a href="mailto:${escapeAttribute(profile.email)}">${escapeHtml(profile.email)}</a>
+      </div>
+    </div>
+  </footer>
+`;
+}
+
+function projectCard(project, depth) {
+  return `
+    <article class="project-card reveal">
+      <div class="project-card__top">
+        <span class="project-card__type">${escapeHtml(project.type)}</span>
+        ${project.status !== project.type ? `<span class="project-card__status">${escapeHtml(project.status)}</span>` : ""}
+      </div>
+      <h3>${escapeHtml(project.name)}</h3>
+      <p>${escapeHtml(project.description)}</p>
+      ${tagList(project.technologies)}
+      <div class="project-card__actions">
+        ${buttonLink(project.cta, project.repoUrl, depth, "primary compact", "github")}
+      </div>
+    </article>
+  `;
+}
+
+function bioLink(item, depth) {
+  const isPlaceholder = item.kind === "placeholder";
+  const external = item.kind === "external";
+
+  return `
+    <a class="bio-link ${isPlaceholder ? "placeholder-link" : ""}" href="${escapeAttribute(
+      normalizeHref(item.href, depth)
+    )}" ${external ? 'target="_blank" rel="noreferrer"' : ""} ${
+      isPlaceholder ? 'data-placeholder="true" aria-label="' + escapeAttribute(`${item.label}: URL pendiente de añadir`) + '"' : ""
+    }>
+      <span class="bio-link__icon" aria-hidden="true">${icon(item.icon)}</span>
+      <span>
+        <strong>${escapeHtml(item.label)}</strong>
+        <small>${escapeHtml(item.description)}</small>
+      </span>
+      <span class="bio-link__arrow" aria-hidden="true">${icon("arrow-right")}</span>
+    </a>
+  `;
+}
+
+function buttonLink(label, href, depth, variant = "primary", iconName = "arrow-right", options = {}) {
+  const normalizedHref = normalizeHref(href, depth);
+  const external = isExternal(href);
+  const placeholder = options.placeholder || href.startsWith("#actualizar");
+  const attrs = [
+    `class="button button--${variant.replaceAll(" ", " button--")}${placeholder ? " placeholder-link" : ""}"`,
+    `href="${escapeAttribute(normalizedHref)}"`,
+    external ? 'target="_blank" rel="noreferrer"' : "",
+    placeholder ? 'data-placeholder="true"' : ""
+  ]
+    .filter(Boolean)
+    .join(" ");
+
+  return `<a ${attrs}>${icon(iconName)}<span>${escapeHtml(label)}</span></a>`;
+}
+
+function tagList(tags) {
+  return `
+    <ul class="tag-list" aria-label="Tecnologías">
+      ${tags.map((tag) => `<li>${escapeHtml(tag)}</li>`).join("")}
+    </ul>
+  `;
+}
+
+function featureList(items) {
+  return `
+    <ul class="feature-list">
+      ${items.map((item) => `<li>${escapeHtml(item)}</li>`).join("")}
+    </ul>
+  `;
+}
+
+function timelineList(items) {
+  return `
+    <div class="timeline-list">
+      ${items
+        .map(
+          (item) => `
+            <article class="timeline-item">
+              <div>
+                <h3>${escapeHtml(item.role)}</h3>
+                <p>${escapeHtml(item.company)} · ${escapeHtml(item.period)}</p>
+              </div>
+              ${featureList(item.bullets)}
+            </article>
+          `
+        )
+        .join("")}
+    </div>
+  `;
+}
+
+function educationList(items) {
+  return `
+    <div class="education-list">
+      ${items
+        .map(
+          (item) => `
+            <article>
+              <h3>${escapeHtml(item.title)}</h3>
+              <p>${escapeHtml(item.place)} · ${escapeHtml(item.period)}</p>
+            </article>
+          `
+        )
+        .join("")}
+    </div>
+  `;
+}
+
+function renderRedirects() {
+  return `${shortRedirects.map(([from, to, code]) => `${from}  ${to}  ${code}`).join("\n")}\n`;
+}
+
+function renderRobots() {
+  return `User-agent: *
+Allow: /
+
+Sitemap: ${canonicalUrl("/sitemap.xml")}
+`;
+}
+
+function renderSitemap() {
+  const urls = pages.map((page) => page.route);
+  return `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+${urls
+  .map(
+    (url) => `  <url>
+    <loc>${canonicalUrl(url)}</loc>
+  </url>`
+  )
+  .join("\n")}
+</urlset>
+`;
+}
+
+function asset(relativePath, depth) {
+  return `${"../".repeat(depth)}${relativePath}`;
+}
+
+function routeHref(href, depth) {
+  if (href === "/") {
+    return depth === 0 ? "./" : "../".repeat(depth);
+  }
+
+  const cleanHref = href.startsWith("/") ? href.slice(1) : href;
+  return `${"../".repeat(depth)}${cleanHref}`;
+}
+
+function normalizeHref(href, depth) {
+  if (!href) {
+    return "#";
+  }
+
+  if (isExternal(href) || href.startsWith("mailto:") || href.startsWith("#")) {
+    return href;
+  }
+
+  return routeHref(href, depth);
+}
+
+function canonicalUrl(route) {
+  return new URL(route, profile.domain).toString();
+}
+
+function isExternal(href) {
+  return /^https?:\/\//.test(href);
+}
+
+function escapeHtml(value) {
+  return String(value)
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
+}
+
+function escapeAttribute(value) {
+  return escapeHtml(value).replaceAll("\n", " ");
+}
+
+function slugify(value) {
+  return String(value)
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
+
+function icon(name) {
+  const icons = {
+    "arrow-left":
+      '<svg viewBox="0 0 24 24" focusable="false"><path d="M19 12H5m6-6-6 6 6 6"/></svg>',
+    "arrow-right":
+      '<svg viewBox="0 0 24 24" focusable="false"><path d="M5 12h14m-6-6 6 6-6 6"/></svg>',
+    bot:
+      '<svg viewBox="0 0 24 24" focusable="false"><path d="M12 8V4m-6 8a6 6 0 0 1 12 0v5a3 3 0 0 1-3 3H9a3 3 0 0 1-3-3v-5Z"/><path d="M9 13h.01M15 13h.01"/></svg>',
+    camera:
+      '<svg viewBox="0 0 24 24" focusable="false"><path d="M4 8a2 2 0 0 1 2-2h2l1.5-2h5L16 6h2a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V8Z"/><path d="M9 13a3 3 0 1 0 6 0 3 3 0 0 0-6 0Z"/></svg>',
+    code:
+      '<svg viewBox="0 0 24 24" focusable="false"><path d="m9 18-6-6 6-6m6 12 6-6-6-6"/></svg>',
+    file:
+      '<svg viewBox="0 0 24 24" focusable="false"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9Z"/><path d="M14 3v6h6M8 13h8M8 17h5"/></svg>',
+    github:
+      '<svg viewBox="0 0 24 24" focusable="false"><path d="M15 22v-4a4.8 4.8 0 0 0-1-3c3 0 6-2 6-6a5.5 5.5 0 0 0-1.5-4 5 5 0 0 0-.1-4S17.2.6 15 2.5a13.4 13.4 0 0 0-6 0C6.8.6 5.6 1 5.6 1a5 5 0 0 0-.1 4A5.5 5.5 0 0 0 4 9c0 4 3 6 6 6a4.8 4.8 0 0 0-1 3v4"/><path d="M9 18c-4.5 2-5-2-7-2"/></svg>',
+    grid:
+      '<svg viewBox="0 0 24 24" focusable="false"><path d="M4 4h7v7H4zM13 4h7v7h-7zM4 13h7v7H4zM13 13h7v7h-7z"/></svg>',
+    linkedin:
+      '<svg viewBox="0 0 24 24" focusable="false"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-4 0v7h-4v-7a6 6 0 0 1 6-6Z"/><path d="M2 9h4v12H2z"/><path d="M4 4h.01"/></svg>',
+    mail:
+      '<svg viewBox="0 0 24 24" focusable="false"><path d="M4 6h16v12H4z"/><path d="m4 7 8 6 8-6"/></svg>',
+    send:
+      '<svg viewBox="0 0 24 24" focusable="false"><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></svg>',
+    spark:
+      '<svg viewBox="0 0 24 24" focusable="false"><path d="m12 2 2.2 6.8H21l-5.5 4 2.1 6.8-5.6-4.2-5.6 4.2 2.1-6.8L3 8.8h6.8z"/></svg>',
+    users:
+      '<svg viewBox="0 0 24 24" focusable="false"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><path d="M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8Z"/><path d="M22 21v-2a4 4 0 0 0-3-3.9"/><path d="M16 3.1a4 4 0 0 1 0 7.8"/></svg>',
+    x:
+      '<svg viewBox="0 0 24 24" focusable="false"><path d="m4 4 16 16M20 4 4 20"/></svg>'
+  };
+
+  return icons[name] ?? icons["arrow-right"];
+}
+
+if (process.argv[1] === fileURLToPath(import.meta.url)) {
+  build();
+  process.stdout.write(`Generated ${path.relative(rootDir, distDir)}\n`);
+}
