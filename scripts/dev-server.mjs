@@ -63,11 +63,23 @@ function startServer(port) {
 }
 
 function resolveRequest(rawUrl) {
-  const url = new URL(rawUrl, "http://localhost");
-  const cleanPath = decodeURIComponent(url.pathname);
+  let url;
+  try {
+    url = new URL(rawUrl, "http://localhost");
+  } catch {
+    return null;
+  }
+
+  let cleanPath;
+  try {
+    cleanPath = decodeURIComponent(url.pathname);
+  } catch {
+    return null;
+  }
+
   const candidate = path.normalize(path.join(distDir, cleanPath));
 
-  if (!candidate.startsWith(distDir)) {
+  if (!isInside(distDir, candidate)) {
     return null;
   }
 
@@ -84,4 +96,9 @@ function resolveRequest(rawUrl) {
   }
 
   return path.join(distDir, "index.html");
+}
+
+function isInside(parent, child) {
+  const relative = path.relative(parent, child);
+  return relative === "" || (!relative.startsWith("..") && !path.isAbsolute(relative));
 }

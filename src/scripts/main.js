@@ -42,12 +42,59 @@ if ("IntersectionObserver" in window) {
   revealItems.forEach((item) => item.classList.add("is-visible"));
 }
 
-document.querySelectorAll(".placeholder-link").forEach((link) => {
-  link.addEventListener("click", (event) => {
-    event.preventDefault();
-    showToast("Enlace pendiente de actualizar en src/data/profile.mjs.");
+document.querySelectorAll("[data-copy-email]").forEach((button) => {
+  button.addEventListener("click", async () => {
+    const email = button.getAttribute("data-copy-email");
+    const label = button.querySelector("[data-copy-label]");
+    const originalText = label?.textContent || "Copiar correo";
+
+    if (!email) {
+      return;
+    }
+
+    try {
+      await copyText(email);
+      if (label) {
+        label.textContent = "Correo copiado";
+      }
+      button.classList.add("is-copied");
+      showToast("Correo copiado al portapapeles.");
+
+      window.setTimeout(() => {
+        if (label) {
+          label.textContent = originalText;
+        }
+        button.classList.remove("is-copied");
+      }, 2600);
+    } catch {
+      showToast("No se pudo copiar el correo. Puedes seleccionarlo manualmente.");
+    }
   });
 });
+
+async function copyText(value) {
+  if (navigator.clipboard?.writeText) {
+    await navigator.clipboard.writeText(value);
+    return;
+  }
+
+  const field = document.createElement("textarea");
+  field.value = value;
+  field.setAttribute("readonly", "");
+  field.style.position = "fixed";
+  field.style.opacity = "0";
+  document.body.append(field);
+  field.select();
+
+  try {
+    const copied = document.execCommand("copy");
+    if (!copied) {
+      throw new Error("Copy command failed");
+    }
+  } finally {
+    field.remove();
+  }
+}
 
 function showToast(message) {
   if (!toast) {

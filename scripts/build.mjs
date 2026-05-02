@@ -2,7 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { profile } from "../src/data/profile.mjs";
-import { projects, repoProjects } from "../src/data/projects.mjs";
+import { projects } from "../src/data/projects.mjs";
 import { linkGroups } from "../src/data/links.mjs";
 import { cv } from "../src/data/cv.mjs";
 
@@ -21,19 +21,12 @@ const navItems = [
   { label: "CV", href: "/cv/", active: "cv" }
 ];
 
-const pages = [
-  { out: "index.html", route: "/", depth: 0 },
-  { out: "links/index.html", route: "/links/", depth: 1 },
-  { out: "proyectos/index.html", route: "/proyectos/", depth: 1 },
-  { out: "cv/index.html", route: "/cv/", depth: 1 }
-];
+const pages = ["/", "/links/", "/proyectos/", "/cv/"];
 
 const shortRedirects = [
   ["/github", profile.github, 302],
   ["/linkedin", profile.linkedin, 302],
   ["/telegram", profile.telegram, 302],
-  ["/instagram", profile.instagram, 302],
-  ["/x", profile.x, 302],
   ["/friends4you", "https://github.com/samu-tec/Friends4You", 302],
   ["/discord-rag-bot", "https://github.com/samu-tec/Discord-RAG-Bot", 302],
   ["/pokeapi", "https://github.com/samu-tec/PokeAPI", 302],
@@ -63,11 +56,11 @@ export function build() {
 
 function resetDist() {
   const resolved = path.resolve(distDir);
-  if (!resolved.startsWith(rootDir)) {
+  if (!isInside(rootDir, resolved)) {
     throw new Error(`Refusing to write outside project root: ${resolved}`);
   }
 
-  fs.rmSync(resolved, { recursive: true, force: true });
+  fs.rmSync(resolved, { recursive: true, force: true, maxRetries: 3, retryDelay: 100 });
   fs.mkdirSync(resolved, { recursive: true });
 }
 
@@ -128,15 +121,14 @@ function renderHome() {
           <p class="hero__intro">${escapeHtml(profile.intro)}</p>
           <div class="hero__actions" aria-label="Acciones principales">
             ${buttonLink("Ver proyectos", "/proyectos/", 0, "primary", "grid")}
-            ${buttonLink("Email", `mailto:${profile.email}`, 0, "secondary", "mail")}
+            ${buttonLink("Ver CV", "/cv/", 0, "secondary", "file")}
+            ${buttonLink("Contactar", "/links/#contacto", 0, "ghost", "mail")}
             ${buttonLink("GitHub", profile.github, 0, "ghost", "github")}
-            ${buttonLink("LinkedIn", profile.linkedin, 0, "ghost", "linkedin")}
-            ${buttonLink("Telegram", profile.telegram, 0, "ghost", "send")}
           </div>
           <dl class="hero__facts" aria-label="Resumen rápido">
-            <div><dt>Foco</dt><dd>DAW</dd></div>
-            <div><dt>Stack</dt><dd>Aplicaciones web</dd></div>
-            <div><dt>Dominio</dt><dd>samuelciocan.com</dd></div>
+            <div><dt>Foco</dt><dd>Desarrollo web</dd></div>
+            <div><dt>Frontend</dt><dd>Interfaces responsive</dd></div>
+            <div><dt>Backend</dt><dd>APIs y bases de datos</dd></div>
           </dl>
         </div>
 
@@ -145,15 +137,15 @@ function renderHome() {
             <img src="${asset("assets/img/samuel-ciocan.png", 0)}" alt="Foto de Samuel Ciocan" width="760" height="760" decoding="async" fetchpriority="high">
             <div class="status-card" aria-label="Estado profesional">
               <span class="status-dot" aria-hidden="true"></span>
-              <span>Disponible para nuevos retos web</span>
+              <span>Construyendo proyectos web</span>
             </div>
           </div>
           <div class="code-panel" aria-label="Resumen en formato código">
             <span class="code-panel__bar"></span>
             <pre><code>const developer = {
   name: "Samuel Ciocan",
-  role: "Desarrollador Web",
-  focus: "aplicaciones útiles"
+  role: "Full Stack Web Developer",
+  focus: "Frontend + Backend"
 };</code></pre>
           </div>
         </div>
@@ -162,8 +154,8 @@ function renderHome() {
       <section class="section-shell section-block">
         <div class="section-heading reveal">
           <p class="eyebrow">Proyectos</p>
-          <h2>Proyectos con intención y práctica real</h2>
-          <p>Repositorios donde practico, construyo y documento soluciones web con una base técnica cada vez más sólida.</p>
+          <h2>Proyectos reales para seguir creciendo</h2>
+          <p>Repositorios donde practico desarrollo frontend, backend, consumo de APIs y organización de código con una base técnica cada vez más sólida.</p>
         </div>
         <div class="project-grid project-grid--featured">
           ${featuredProjects.map((project) => projectCard(project, 0)).join("")}
@@ -173,17 +165,17 @@ function renderHome() {
       <section class="section-shell split-section">
         <div class="surface-panel reveal">
           <p class="eyebrow">Tecnologías</p>
-          <h2>Herramientas para crear productos web</h2>
-          <p>Me centro en tecnologías que permiten crear interfaces claras, conectar datos y mantener proyectos sin complicarlos.</p>
+          <h2>Stack con el que estoy construyendo proyectos</h2>
+          <p>Tecnologías que uso y sigo reforzando para crear interfaces limpias, conectar datos, trabajar con APIs y desplegar aplicaciones web.</p>
           ${tagList(profile.technologies)}
         </div>
         <div class="surface-panel surface-panel--accent reveal">
           <p class="eyebrow">Enfoque</p>
           <h2>Claridad visual, estructura limpia y criterio práctico</h2>
-          <p>Busco que cada página sea fácil de entender, cómoda de usar en móvil y sencilla de seguir mejorando.</p>
+          <p>Busco que cada proyecto sea fácil de entender, cómodo de usar en móvil y sencillo de seguir mejorando por dentro.</p>
           <div class="inline-actions">
             ${buttonLink("Ver CV", "/cv/", 0, "secondary", "file")}
-            ${buttonLink("Email", `mailto:${profile.email}`, 0, "primary", "mail")}
+            ${buttonLink("Contactar", "/links/#contacto", 0, "primary", "mail")}
           </div>
         </div>
       </section>
@@ -195,7 +187,7 @@ function renderLinks() {
   return layout({
     title: `${profile.name} | Links`,
     description:
-      "Enlaces principales de Samuel Ciocan: portfolio, proyectos, GitHub, contacto y redes profesionales.",
+      "Enlaces principales de Samuel Ciocan: proyectos, CV, GitHub, LinkedIn, Telegram y contacto profesional.",
     active: "links",
     route: "/links/",
     depth: 1,
@@ -207,13 +199,13 @@ function renderLinks() {
           <p class="eyebrow">Enlaces profesionales</p>
           <h1>${escapeHtml(profile.name)}</h1>
           <p>${escapeHtml(profile.role)} · proyectos, CV, contacto y repositorios.</p>
-          <a class="email-chip" href="mailto:${escapeAttribute(profile.email)}">${icon("mail")} ${escapeHtml(profile.email)}</a>
+          ${emailActions("Correo público", { id: "contacto" })}
         </div>
 
         <div class="links-stack">
           ${linkGroups
-            .map(
-              (group) => `
+      .map(
+        (group) => `
                 <section class="link-group reveal" aria-labelledby="link-group-${slugify(group.title)}">
                   <h2 id="link-group-${slugify(group.title)}">${escapeHtml(group.title)}</h2>
                   <div class="bio-links">
@@ -221,8 +213,8 @@ function renderLinks() {
                   </div>
                 </section>
               `
-            )
-            .join("")}
+    )
+      .join("")}
         </div>
       </section>
     `
@@ -230,6 +222,8 @@ function renderLinks() {
 }
 
 function renderProjects() {
+  const repoProjects = projects.filter((project) => Boolean(project.repoUrl));
+
   return layout({
     title: `${profile.name} | Proyectos`,
     description:
@@ -242,7 +236,7 @@ function renderProjects() {
       <section class="page-hero section-shell reveal">
         <p class="eyebrow">Portfolio de proyectos</p>
         <h1>Proyectos web y repositorios</h1>
-        <p>Una selección directa de repositorios con una descripción breve, tecnologías usadas y acceso al código en GitHub.</p>
+        <p>Una selección de proyectos donde practico interfaces, lógica backend, consumo de APIs, bases de datos y despliegue web.</p>
       </section>
 
       <section class="section-shell">
@@ -271,8 +265,9 @@ function renderCv() {
         <h1>${escapeHtml(profile.name)}</h1>
         <p>${escapeHtml(cv.headline)}</p>
         <div class="inline-actions">
-          ${buttonLink("Email", `mailto:${profile.email}`, 1, "primary", "mail")}
-          ${buttonLink("LinkedIn", profile.linkedin, 1, "secondary", "linkedin")}
+          ${buttonLink("Contactar", "#contacto", 1, "primary", "mail")}
+          ${buttonLink("Ver proyectos", "/proyectos/", 1, "secondary", "grid")}
+          ${buttonLink("GitHub", profile.github, 1, "ghost", "github")}
         </div>
       </section>
 
@@ -291,7 +286,8 @@ function renderCv() {
         </div>
         <div class="surface-panel reveal">
           <h2>Tecnologías</h2>
-          ${tagList(profile.technologies)}
+          <p class="panel-intro">Tecnologías que uso y sigo reforzando en proyectos frontend, backend y despliegue web.</p>
+          ${tagList(profile.technologies, { variant: "interactive", label: "Tecnologías que uso y sigo reforzando" })}
         </div>
         <div class="surface-panel reveal">
           <h2>Habilidades</h2>
@@ -305,14 +301,13 @@ function renderCv() {
           <h2>Proyectos destacados</h2>
           ${featureList(featured.map((project) => `${project.name}: ${project.description}`))}
         </div>
-        <div class="surface-panel surface-panel--wide reveal">
+        <div class="surface-panel surface-panel--wide reveal" id="contacto">
           <h2>Contacto</h2>
           <p>Disponible para conversaciones profesionales, prácticas, colaboraciones y proyectos web.</p>
+          ${emailActions("Correo público")}
           <div class="inline-actions">
-            ${buttonLink(profile.email, `mailto:${profile.email}`, 1, "primary", "mail")}
             ${buttonLink("GitHub", profile.github, 1, "secondary", "github")}
             ${buttonLink("LinkedIn", profile.linkedin, 1, "ghost", "linkedin")}
-            ${buttonLink("Telegram", profile.telegram, 1, "ghost", "send")}
           </div>
         </div>
       </section>
@@ -340,10 +335,14 @@ function layout({ title, description, active, route, depth, body, bodyClass }) {
   <meta property="og:description" content="${escapeAttribute(description)}">
   <meta property="og:url" content="${escapeAttribute(canonical)}">
   <meta property="og:image" content="${escapeAttribute(image)}">
+  <meta property="og:image:width" content="${escapeAttribute(profile.seo.imageWidth)}">
+  <meta property="og:image:height" content="${escapeAttribute(profile.seo.imageHeight)}">
+  <meta property="og:image:alt" content="${escapeAttribute(profile.seo.imageAlt)}">
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="${escapeAttribute(title)}">
   <meta name="twitter:description" content="${escapeAttribute(description)}">
   <meta name="twitter:image" content="${escapeAttribute(image)}">
+  <meta name="twitter:image:alt" content="${escapeAttribute(profile.seo.imageAlt)}">
   <link rel="icon" href="${asset("favicon.svg", depth)}" type="image/svg+xml">
   <link rel="manifest" href="${asset("site.webmanifest", depth)}">
   <link rel="preload" href="${asset("assets/css/styles.css", depth)}" as="style">
@@ -379,14 +378,13 @@ function siteHeader(active, depth) {
       </button>
       <div class="nav-links" id="site-menu">
         ${navItems
-          .map(
-            (item) => `
-              <a href="${routeHref(item.href, depth)}" ${
-                item.active === active ? 'aria-current="page"' : ""
-              }>${escapeHtml(item.label)}</a>
+    .map(
+      (item) => `
+              <a href="${routeHref(item.href, depth)}" ${item.active === active ? 'aria-current="page"' : ""
+        }>${escapeHtml(item.label)}</a>
             `
-          )
-          .join("")}
+  )
+    .join("")}
       </div>
     </nav>
   </header>
@@ -398,11 +396,13 @@ function siteFooter(depth) {
   <footer class="site-footer">
     <div class="footer-shell">
       <div>
-        <strong>${escapeHtml(profile.name)}</strong>
-        <p>${escapeHtml(profile.role)}</p>
+        <p>© ${escapeHtml(profile.name)}</p>
       </div>
-      <div class="footer-links" aria-label="Enlaces de contacto">
-        <a href="mailto:${escapeAttribute(profile.email)}">${escapeHtml(profile.email)}</a>
+      <div class="footer-links" aria-label="Enlaces básicos">
+        <a href="${routeHref("/", depth)}">Inicio</a>
+        <a href="${routeHref("/links/", depth)}">Links</a>
+        <a href="${routeHref("/proyectos/", depth)}">Proyectos</a>
+        <a href="${routeHref("/cv/", depth)}">CV</a>
       </div>
     </div>
   </footer>
@@ -414,7 +414,6 @@ function projectCard(project, depth) {
     <article class="project-card reveal">
       <div class="project-card__top">
         <span class="project-card__type">${escapeHtml(project.type)}</span>
-        ${project.status !== project.type ? `<span class="project-card__status">${escapeHtml(project.status)}</span>` : ""}
       </div>
       <h3>${escapeHtml(project.name)}</h3>
       <p>${escapeHtml(project.description)}</p>
@@ -427,15 +426,11 @@ function projectCard(project, depth) {
 }
 
 function bioLink(item, depth) {
-  const isPlaceholder = item.kind === "placeholder";
   const external = item.kind === "external";
+  const href = normalizeHref(item.href, depth);
 
   return `
-    <a class="bio-link ${isPlaceholder ? "placeholder-link" : ""}" href="${escapeAttribute(
-      normalizeHref(item.href, depth)
-    )}" ${external ? 'target="_blank" rel="noreferrer"' : ""} ${
-      isPlaceholder ? 'data-placeholder="true" aria-label="' + escapeAttribute(`${item.label}: URL pendiente de añadir`) + '"' : ""
-    }>
+    <a class="bio-link" href="${escapeAttribute(href)}" ${external ? 'target="_blank" rel="noopener noreferrer"' : ""}>
       <span class="bio-link__icon" aria-hidden="true">${icon(item.icon)}</span>
       <span>
         <strong>${escapeHtml(item.label)}</strong>
@@ -446,15 +441,13 @@ function bioLink(item, depth) {
   `;
 }
 
-function buttonLink(label, href, depth, variant = "primary", iconName = "arrow-right", options = {}) {
+function buttonLink(label, href, depth, variant = "primary", iconName = "arrow-right") {
   const normalizedHref = normalizeHref(href, depth);
   const external = isExternal(href);
-  const placeholder = options.placeholder || href.startsWith("#actualizar");
   const attrs = [
-    `class="button button--${variant.replaceAll(" ", " button--")}${placeholder ? " placeholder-link" : ""}"`,
+    `class="button button--${variant.replaceAll(" ", " button--")}"`,
     `href="${escapeAttribute(normalizedHref)}"`,
-    external ? 'target="_blank" rel="noreferrer"' : "",
-    placeholder ? 'data-placeholder="true"' : ""
+    external ? 'target="_blank" rel="noopener noreferrer"' : ""
   ]
     .filter(Boolean)
     .join(" ");
@@ -462,10 +455,37 @@ function buttonLink(label, href, depth, variant = "primary", iconName = "arrow-r
   return `<a ${attrs}>${icon(iconName)}<span>${escapeHtml(label)}</span></a>`;
 }
 
-function tagList(tags) {
+function emailActions(label, options = {}) {
+  const idAttribute = options.id ? ` id="${escapeAttribute(options.id)}"` : "";
+
   return `
-    <ul class="tag-list" aria-label="Tecnologías">
-      ${tags.map((tag) => `<li>${escapeHtml(tag)}</li>`).join("")}
+    <div class="email-actions"${idAttribute}>
+      <span class="email-actions__label">${escapeHtml(label)}</span>
+      <a class="email-actions__address" href="mailto:${escapeAttribute(profile.email)}" aria-label="Enviar correo a ${escapeAttribute(profile.email)}">
+        ${icon("mail")}<span>${escapeHtml(profile.email)}</span>
+      </a>
+      <button class="button button--ghost button--compact copy-email-button" type="button" data-copy-email="${escapeAttribute(profile.email)}" aria-label="Copiar correo ${escapeAttribute(profile.email)}">
+        ${icon("copy")}<span data-copy-label>Copiar correo</span>
+      </button>
+    </div>
+  `;
+}
+
+function tagList(tags, options = {}) {
+  const interactive = options.variant === "interactive";
+  const classes = ["tag-list", interactive ? "tag-list--interactive" : ""]
+    .filter(Boolean)
+    .join(" ");
+  const label = options.label || "Tecnologías";
+
+  return `
+    <ul class="${classes}" aria-label="${escapeAttribute(label)}">
+      ${tags
+      .map((tag, index) => {
+        const attrs = interactive ? ` style="--tag-index: ${index};"` : "";
+        return `<li${attrs}>${escapeHtml(tag)}</li>`;
+      })
+      .join("")}
     </ul>
   `;
 }
@@ -482,8 +502,8 @@ function timelineList(items) {
   return `
     <div class="timeline-list">
       ${items
-        .map(
-          (item) => `
+    .map(
+      (item) => `
             <article class="timeline-item">
               <div>
                 <h3>${escapeHtml(item.role)}</h3>
@@ -492,8 +512,8 @@ function timelineList(items) {
               ${featureList(item.bullets)}
             </article>
           `
-        )
-        .join("")}
+  )
+    .join("")}
     </div>
   `;
 }
@@ -502,15 +522,15 @@ function educationList(items) {
   return `
     <div class="education-list">
       ${items
-        .map(
-          (item) => `
+    .map(
+      (item) => `
             <article>
               <h3>${escapeHtml(item.title)}</h3>
               <p>${escapeHtml(item.place)} · ${escapeHtml(item.period)}</p>
             </article>
           `
-        )
-        .join("")}
+  )
+    .join("")}
     </div>
   `;
 }
@@ -528,16 +548,15 @@ Sitemap: ${canonicalUrl("/sitemap.xml")}
 }
 
 function renderSitemap() {
-  const urls = pages.map((page) => page.route);
   return `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-${urls
-  .map(
-    (url) => `  <url>
+${pages
+    .map(
+      (url) => `  <url>
     <loc>${canonicalUrl(url)}</loc>
   </url>`
   )
-  .join("\n")}
+    .join("\n")}
 </urlset>
 `;
 }
@@ -575,6 +594,11 @@ function isExternal(href) {
   return /^https?:\/\//.test(href);
 }
 
+function isInside(parent, child) {
+  const relative = path.relative(parent, child);
+  return relative === "" || (!relative.startsWith("..") && !path.isAbsolute(relative));
+}
+
 function escapeHtml(value) {
   return String(value)
     .replaceAll("&", "&amp;")
@@ -599,16 +623,14 @@ function slugify(value) {
 
 function icon(name) {
   const icons = {
-    "arrow-left":
-      '<svg viewBox="0 0 24 24" focusable="false"><path d="M19 12H5m6-6-6 6 6 6"/></svg>',
     "arrow-right":
       '<svg viewBox="0 0 24 24" focusable="false"><path d="M5 12h14m-6-6 6 6-6 6"/></svg>',
     bot:
       '<svg viewBox="0 0 24 24" focusable="false"><path d="M12 8V4m-6 8a6 6 0 0 1 12 0v5a3 3 0 0 1-3 3H9a3 3 0 0 1-3-3v-5Z"/><path d="M9 13h.01M15 13h.01"/></svg>',
-    camera:
-      '<svg viewBox="0 0 24 24" focusable="false"><path d="M4 8a2 2 0 0 1 2-2h2l1.5-2h5L16 6h2a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V8Z"/><path d="M9 13a3 3 0 1 0 6 0 3 3 0 0 0-6 0Z"/></svg>',
     code:
       '<svg viewBox="0 0 24 24" focusable="false"><path d="m9 18-6-6 6-6m6 12 6-6-6-6"/></svg>',
+    copy:
+      '<svg viewBox="0 0 24 24" focusable="false"><path d="M8 8h10a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2v-8a2 2 0 0 1 2-2Z"/><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2"/></svg>',
     file:
       '<svg viewBox="0 0 24 24" focusable="false"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9Z"/><path d="M14 3v6h6M8 13h8M8 17h5"/></svg>',
     github:
@@ -624,9 +646,7 @@ function icon(name) {
     spark:
       '<svg viewBox="0 0 24 24" focusable="false"><path d="m12 2 2.2 6.8H21l-5.5 4 2.1 6.8-5.6-4.2-5.6 4.2 2.1-6.8L3 8.8h6.8z"/></svg>',
     users:
-      '<svg viewBox="0 0 24 24" focusable="false"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><path d="M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8Z"/><path d="M22 21v-2a4 4 0 0 0-3-3.9"/><path d="M16 3.1a4 4 0 0 1 0 7.8"/></svg>',
-    x:
-      '<svg viewBox="0 0 24 24" focusable="false"><path d="m4 4 16 16M20 4 4 20"/></svg>'
+      '<svg viewBox="0 0 24 24" focusable="false"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><path d="M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8Z"/><path d="M22 21v-2a4 4 0 0 0-3-3.9"/><path d="M16 3.1a4 4 0 0 1 0 7.8"/></svg>'
   };
 
   return icons[name] ?? icons["arrow-right"];

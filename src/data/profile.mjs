@@ -1,38 +1,40 @@
 export const profile = {
   name: "Samuel Ciocan",
-  fullName: "Samuel Daniel Ciocan",
-  role: "Desarrollador Web",
+  role: "Desarrollador Web Full Stack",
   domain: "https://samuelciocan.com",
   email: "contacto@samuelciocan.com",
   github: "https://github.com/samu-tec/",
   linkedin: "https://www.linkedin.com/in/samuelciocan/",
   telegram: "https://t.me/Samu_Tech",
-  instagram: "https://www.instagram.com/samu_tech",
-  x: "https://x.com/samu_tech",
-  avatar: "assets/img/samuel-ciocan.png",
   intro:
-    "Desarrollo sitios y aplicaciones web con interfaces claras, código ordenado y una experiencia pensada para usarse sin complicaciones.",
+    "Desarrollo aplicaciones web claras, funcionales y bien estructuradas, cuidando tanto la interfaz como la lógica que las sostiene.",
   profileSummary:
-    "Soy desarrollador web especializado en crear interfaces limpias, estructurar proyectos de forma mantenible y convertir ideas en aplicaciones útiles. Trabajo con tecnologías web actuales, cuido la experiencia en móvil y construyo proyectos propios para seguir creciendo con práctica real.",
+    "Soy desarrollador web full stack en etapa de crecimiento, centrado en crear interfaces limpias, backends organizados y proyectos fáciles de mantener. Trabajo con tecnologías web actuales, bases de datos, APIs y despliegue, reforzando lo aprendido con proyectos reales y código pensado para seguir mejorando.",
   seo: {
-    title: "Samuel Ciocan | Desarrollador Web",
+    title: "Samuel Ciocan | Desarrollador Web Full Stack",
     description:
-      "Portfolio personal de Samuel Ciocan, desarrollador web. Proyectos, CV, contacto y enlaces profesionales.",
-    image: "assets/img/og-samuel-ciocan.svg"
+      "Portfolio personal de Samuel Ciocan, desarrollador web full stack. Proyectos, CV, contacto y enlaces profesionales.",
+    image: "assets/img/og-samuel-ciocan.png",
+    imageAlt: "Samuel Ciocan - Desarrollador Web Full Stack",
+    imageWidth: 1200,
+    imageHeight: 630
   },
   technologies: [
-    "HTML",
-    "CSS",
+    "React",
+    "TypeScript",
     "JavaScript",
+    "Node.js",
     "PHP",
     "MySQL",
-    "Python",
-    "Git",
     "APIs REST",
-    "Node.js"
+    "HTML",
+    "CSS",
+    "Git/GitHub",
+    "Cloudflare",
+    "Desarrollo frontend",
+    "Desarrollo backend",
+    "Diseño responsive",
+    "Buenas prácticas",
+    "Despliegue web"
   ],
-  editableNotes: [
-    "Actualiza public/cv.pdf cuando tengas una versión PDF actualizada y sin datos personales privados.",
-    "Cambia textos, proyectos y enlaces desde los archivos de src/data."
-  ]
 };

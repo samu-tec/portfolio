@@ -1,6 +1,6 @@
 export const cv = {
   headline:
-    "Desarrollador web con foco en interfaces limpias, aplicaciones prácticas y código fácil de mantener.",
+    "Desarrollador web full stack orientado a crear aplicaciones claras, funcionales y bien estructuradas.",
   availability: ["Carné de conducir y vehículo propio.", "Disponibilidad total."],
   experience: [
     {
@@ -9,7 +9,7 @@ export const cv = {
       period: "Prácticas profesionales de DAW",
       bullets: [
         "Colaboración en tareas reales de desarrollo web dentro de un entorno profesional.",
-        "Mejora y mantenimiento de funcionalidades con atención a la claridad del código.",
+        "Mejora y mantenimiento de funcionalidades cuidando la claridad del código y la experiencia de uso.",
         "Trabajo coordinado, comunicación constante y aprendizaje aplicado a necesidades reales."
       ]
     },
@@ -56,8 +56,9 @@ export const cv = {
     "Resolución de problemas",
     "Organización y gestión del tiempo",
     "Trabajo en equipo",
-    "Creatividad aplicada",
-    "Atención al detalle"
+    "Aprendizaje continuo",
+    "Atención al detalle",
+    "Cuidado por el código mantenible"
   ],
   languages: ["Castellano: nativo", "Rumano: nativo", "Inglés: nivel medio"]
 };

@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "type": "module",
-  "description": "Portfolio personal estatico de Samuel Ciocan preparado para Cloudflare Pages.",
+  "description": "Portfolio personal de Samuel Ciocan",
   "scripts": {
     "dev": "node scripts/dev-server.mjs",
     "build": "node scripts/build.mjs",
@@ -12,9 +12,16 @@
   },
   "keywords": [
     "portfolio",
-    "cloudflare-pages",
+    "personal-portfolio",
+    "full-stack",
+    "cloudflare-workers",
     "static-site"
   ],
   "author": "Samuel Ciocan",
+  "homepage": "https://samuelciocan.com",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/samu-tec/portfolio"
+  },
   "license": "UNLICENSED"
 }

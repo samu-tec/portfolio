@@ -9,24 +9,17 @@ export const linkGroups = [
     items: [
       {
         label: "Proyectos",
-        description: "Repositorios y trabajos destacados",
+        description: "Aplicaciones y repositorios destacados",
         href: "/proyectos/",
         kind: "internal",
         icon: "grid"
       },
       {
         label: "CV",
-        description: "Perfil profesional en formato web",
+        description: "Perfil profesional y tecnologías",
         href: "/cv/",
         kind: "internal",
         icon: "file"
-      },
-      {
-        label: "Email",
-        description: profile.email,
-        href: `mailto:${profile.email}`,
-        kind: "direct",
-        icon: "mail"
       }
     ]
   },
@@ -53,20 +46,6 @@ export const linkGroups = [
         href: profile.telegram,
         kind: "external",
         icon: "send"
-      },
-      {
-        label: "Instagram",
-        description: "samu_tech",
-        href: profile.instagram,
-        kind: "external",
-        icon: "camera"
-      },
-      {
-        label: "X",
-        description: "samu_tech",
-        href: profile.x,
-        kind: "external",
-        icon: "x"
       }
     ]
   },
@@ -75,28 +54,28 @@ export const linkGroups = [
     items: [
       {
         label: "Friends4You",
-        description: projectBySlug.friends4you.status,
+        description: "Red social DAW con roles y eventos",
         href: projectBySlug.friends4you.repoUrl,
         kind: "external",
         icon: "users"
       },
       {
         label: "Discord-RAG-Bot",
-        description: "Bot RAG para Discord",
+        description: "Bot RAG local para Discord",
         href: projectBySlug["discord-rag-bot"].repoUrl,
         kind: "external",
         icon: "bot"
       },
       {
         label: "PokeAPI",
-        description: projectBySlug.pokeapi.status,
+        description: "Angular, servicios y API Pokémon",
         href: projectBySlug.pokeapi.repoUrl,
         kind: "external",
         icon: "code"
       },
       {
         label: "Portfolio personal",
-        description: "Repositorio de esta web",
+        description: "Repositorio de samuelciocan.com",
         href: projectBySlug["portfolio-personal"].repoUrl,
         kind: "external",
         icon: "spark"
