@@ -329,15 +329,17 @@ function layout({ title, description, active, route, depth, body, bodyClass }) {
   <link rel="canonical" href="${escapeAttribute(canonical)}">
   <meta name="theme-color" content="#ff7a18">
   <meta property="og:type" content="website">
-  <meta property="og:locale" content="es_ES">
-  <meta property="og:site_name" content="${escapeAttribute(profile.name)}">
+  <meta property="og:url" content="${escapeAttribute(canonical)}">
   <meta property="og:title" content="${escapeAttribute(title)}">
   <meta property="og:description" content="${escapeAttribute(description)}">
-  <meta property="og:url" content="${escapeAttribute(canonical)}">
   <meta property="og:image" content="${escapeAttribute(image)}">
+  <meta property="og:image:secure_url" content="${escapeAttribute(image)}">
+  <meta property="og:image:type" content="image/png">
   <meta property="og:image:width" content="${escapeAttribute(profile.seo.imageWidth)}">
   <meta property="og:image:height" content="${escapeAttribute(profile.seo.imageHeight)}">
   <meta property="og:image:alt" content="${escapeAttribute(profile.seo.imageAlt)}">
+  <meta property="og:locale" content="es_ES">
+  <meta property="og:site_name" content="${escapeAttribute(profile.name)}">
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="${escapeAttribute(title)}">
   <meta name="twitter:description" content="${escapeAttribute(description)}">

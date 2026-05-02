@@ -17,7 +17,7 @@ export const profile = {
     image: "assets/img/og-samuel-ciocan.png",
     imageAlt: "Samuel Ciocan - Desarrollador Web Full Stack",
     imageWidth: 1200,
-    imageHeight: 630
+    imageHeight: 627
   },
   technologies: [
     "React",

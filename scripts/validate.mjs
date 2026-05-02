@@ -25,6 +25,23 @@ const requiredFiles = [
   "favicon.svg"
 ];
 
+const expectedHomeMetadata = [
+  '<meta property="og:type" content="website">',
+  '<meta property="og:url" content="https://samuelciocan.com/">',
+  '<meta property="og:title" content="Samuel Ciocan | Desarrollador Web Full Stack">',
+  '<meta property="og:description" content="Portfolio personal de Samuel Ciocan, desarrollador web full stack. Proyectos, CV, contacto y enlaces profesionales.">',
+  '<meta property="og:image" content="https://samuelciocan.com/assets/img/og-samuel-ciocan.png">',
+  '<meta property="og:image:secure_url" content="https://samuelciocan.com/assets/img/og-samuel-ciocan.png">',
+  '<meta property="og:image:type" content="image/png">',
+  '<meta property="og:image:width" content="1200">',
+  '<meta property="og:image:height" content="627">',
+  '<meta property="og:image:alt" content="Samuel Ciocan - Desarrollador Web Full Stack">',
+  '<meta name="twitter:card" content="summary_large_image">',
+  '<meta name="twitter:title" content="Samuel Ciocan | Desarrollador Web Full Stack">',
+  '<meta name="twitter:description" content="Portfolio personal de Samuel Ciocan, desarrollador web full stack. Proyectos, CV, contacto y enlaces profesionales.">',
+  '<meta name="twitter:image" content="https://samuelciocan.com/assets/img/og-samuel-ciocan.png">'
+];
+
 const forbiddenStrings = [
   "gmail.com",
   "FormSubmit",
@@ -64,8 +81,10 @@ for (const file of htmlFiles) {
   assert(html.includes('property="og:title"'), `${relative} is missing Open Graph metadata`);
   assert(html.includes('property="og:type" content="website"'), `${relative} is missing website Open Graph type`);
   assert(html.includes('property="og:image"'), `${relative} is missing Open Graph image`);
+  assert(html.includes('property="og:image:secure_url"'), `${relative} is missing Open Graph secure image URL`);
+  assert(html.includes('property="og:image:type" content="image/png"'), `${relative} is missing Open Graph image type`);
   assert(html.includes('property="og:image:width" content="1200"'), `${relative} is missing Open Graph image width`);
-  assert(html.includes('property="og:image:height" content="630"'), `${relative} is missing Open Graph image height`);
+  assert(html.includes('property="og:image:height" content="627"'), `${relative} is missing Open Graph image height`);
   assert(html.includes('name="twitter:card"'), `${relative} is missing Twitter card metadata`);
   assert(html.includes('name="twitter:image"'), `${relative} is missing Twitter image metadata`);
   assert(html.includes('name="twitter:image:alt"'), `${relative} is missing Twitter image alt metadata`);
@@ -76,6 +95,16 @@ for (const file of htmlFiles) {
   validateExternalBlankLinks(html, relative);
   validateImageAltText(html, relative);
 }
+
+const homeHtml = fs.readFileSync(path.join(distDir, "index.html"), "utf8");
+for (const metadata of expectedHomeMetadata) {
+  assert(homeHtml.includes(metadata), `Home page is missing expected social metadata: ${metadata}`);
+}
+
+const ogImagePath = path.join(distDir, "assets", "img", "og-samuel-ciocan.png");
+const ogImageSize = readPngSize(ogImagePath);
+assert(ogImageSize.width === 1200, `OG image width must be 1200 px, got ${ogImageSize.width}`);
+assert(ogImageSize.height === 627, `OG image height must be 627 px, got ${ogImageSize.height}`);
 
 const generatedText = generatedFiles
   .filter(isTextFile)
@@ -139,6 +168,16 @@ function referenceExists(target) {
 function hasRelValue(tag, value) {
   const rel = tag.match(/\brel="([^"]*)"/);
   return Boolean(rel && rel[1].split(/\s+/).includes(value));
+}
+
+function readPngSize(file) {
+  const buffer = fs.readFileSync(file);
+  assert(buffer.toString("ascii", 1, 4) === "PNG", `${file} is not a PNG file`);
+
+  return {
+    width: buffer.readUInt32BE(16),
+    height: buffer.readUInt32BE(20)
+  };
 }
 
 function listFiles(dir) {
