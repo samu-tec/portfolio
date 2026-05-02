@@ -834,8 +834,10 @@ p {
   display: inline-flex;
   min-height: 42px;
   align-items: center;
+  justify-content: center;
   gap: 0.5rem;
   padding: 0.62rem 0.78rem;
+  text-align: center;
   color: var(--text);
   background: rgba(255, 255, 255, 0.06);
   border: 1px solid var(--line);
